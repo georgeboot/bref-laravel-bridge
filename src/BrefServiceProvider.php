@@ -2,8 +2,6 @@
 
 namespace CacheWerk\BrefLaravelBridge;
 
-use Monolog\Formatter\JsonFormatter;
-
 use Illuminate\Log\LogManager;
 
 use Illuminate\Support\Facades\Config;
@@ -40,8 +38,6 @@ class BrefServiceProvider extends ServiceProvider
 
         Config::set('app.mix_url', Config::get('app.asset_url'));
 
-        Config::set('logging.channels.stderr.formatter', JsonFormatter::class);
-
         Config::set('trustedproxy.proxies', ['0.0.0.0/0', '2000:0:0:0:0:0:0:0/3']);
 
         Config::set('view.compiled', StorageDirectories::Path . '/framework/views');
@@ -71,7 +67,13 @@ class BrefServiceProvider extends ServiceProvider
      */
     public function boot(Dispatcher $dispatcher, LogManager $logManager, FailedJobProviderInterface $queueFailer)
     {
+        $this->app->useStoragePath(StorageDirectories::Path);
+
         if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__ . '/../stubs/serverless.yml' => config_path('serverless.yml'),
+            ], 'serverless-config');
+
             $this->publishes([
                 __DIR__ . '/../config/bref.php' => config_path('bref.php'),
             ], 'bref-config');
